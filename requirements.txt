@@ -1,0 +1,10 @@
+selenium
+beautifulsoup4
+pytest
+python-dateutil
+fastapi
+uvicorn
+sqlalchemy
+apscheduler
+requests
+dateparser 
