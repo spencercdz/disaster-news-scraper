@@ -125,6 +125,16 @@ def scrape_now():
     scrape_all()
     return {"status": "Scraping triggered"}
 
+@app.post("/clear-db")
+def clear_db():
+    session = SessionLocal()
+    deleted = session.query(Article).delete()
+    session.commit()
+    session.close()
+    article_cache.clear()
+    logger.info(f"Cleared DB and cache. {deleted} articles deleted.")
+    return {"status": f"Cleared DB and cache. {deleted} articles deleted."}
+
 def upsert_article(session, data):
     url = data['article_url']
     now = datetime.datetime.utcnow()
@@ -142,6 +152,7 @@ def upsert_article(session, data):
         article.tags = json.dumps(data.get('tags', []))
         article.media_urls = json.dumps(data.get('media_urls', []))
         article.related_articles = json.dumps(data.get('related_articles', []))
+        article.keywords = json.dumps(data.get('keywords', []))
         article.scraped_at = now
     else:
         article = Article(
@@ -154,6 +165,7 @@ def upsert_article(session, data):
             tags=json.dumps(data.get('tags', [])),
             media_urls=json.dumps(data.get('media_urls', [])),
             related_articles=json.dumps(data.get('related_articles', [])),
+            keywords=json.dumps(data.get('keywords', [])),
             scraped_at=now
         )
         session.add(article)

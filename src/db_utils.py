@@ -19,6 +19,7 @@ def upsert_article(session, data):
         article.tags = json.dumps(data.get('tags', []))
         article.media_urls = json.dumps(data.get('media_urls', []))
         article.related_articles = json.dumps(data.get('related_articles', []))
+        article.keywords = json.dumps(data.get('keywords', []))
         article.scraped_at = now
     else:
         article = Article(
@@ -31,6 +32,7 @@ def upsert_article(session, data):
             tags=json.dumps(data.get('tags', [])),
             media_urls=json.dumps(data.get('media_urls', [])),
             related_articles=json.dumps(data.get('related_articles', [])),
+            keywords=json.dumps(data.get('keywords', [])),
             scraped_at=now
         )
         session.add(article)

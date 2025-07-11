@@ -5,14 +5,20 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from src.utils.clean import clean_text, parse_date
 from dateutil import parser as date_parser
+import re
 
 logger = logging.getLogger(__name__)
 
 def contains_keywords(text, keywords):
     if not text or not keywords:
-        return False
-    text_lower = text.lower()
-    return any(kw.lower() in text_lower for kw in keywords)
+        return []
+    text = clean_text(text).lower()
+    matched = []
+    for kw in keywords:
+        pattern = r'\b' + re.escape(kw.lower()) + r'\b'
+        if re.search(pattern, text):
+            matched.append(kw)
+    return matched
 
 class GenericScraper:
     def __init__(self, name, homepage_url, link_filter, pubdate_extractor, headline_extractor, author_extractor, content_extractor, tags_extractor, media_extractor, related_extractor, subtitle_extractor=None, keywords=None):
@@ -63,8 +69,10 @@ class GenericScraper:
                     continue
                 # Keyword filter: check headline and content
                 headline = self.headline_extractor(article_soup)
-                content = self.content_extractor(article_soup)
-                if self.keywords and not (contains_keywords(headline, self.keywords) or contains_keywords(content, self.keywords)):
+                subtitle = self.subtitle_extractor(article_soup)
+                matched_headline = contains_keywords(headline, self.keywords)
+                matched_subtitle = contains_keywords(subtitle, self.keywords)
+                if self.keywords and not (matched_headline or matched_subtitle):
                     logger.info(f"{self.name}: Article at {link} does not match keywords, skipping.")
                     continue
                 articles.append((link, pub_dt))
@@ -92,10 +100,13 @@ class GenericScraper:
         data['publication_date'] = pub_date
         data['author'] = self.author_extractor(soup)
         data['content'] = self.content_extractor(soup)
-        # Keyword filter: check headline and content
-        if self.keywords and not (contains_keywords(data['headline'], self.keywords) or contains_keywords(data['content'], self.keywords)):
+        matched_headline = contains_keywords(data['headline'], self.keywords)
+        matched_subtitle = contains_keywords(data['subtitle'], self.keywords)
+        # Keyword filter: check headline and subtitle
+        if self.keywords and not (matched_headline or matched_subtitle):
             logger.info(f"{self.name}: Article at {url} does not match keywords, skipping.")
             return None
+        data['keywords'] = list(set(matched_headline + matched_subtitle))
         data['tags'] = self.tags_extractor(soup)
         data['media_urls'] = self.media_extractor(soup)
         data['related_articles'] = self.related_extractor(soup)

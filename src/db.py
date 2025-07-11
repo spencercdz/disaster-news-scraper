@@ -22,6 +22,7 @@ class Article(Base):
     media_urls = Column(Text)  # JSON string
     related_articles = Column(Text)  # JSON string
     scraped_at = Column(DateTime, default=datetime.datetime.utcnow)
+    keywords = Column(Text)  # JSON string
 
     def to_dict(self):
         return {
@@ -35,6 +36,7 @@ class Article(Base):
             "media_urls": json.loads(self.media_urls) if self.media_urls else [],
             "related_articles": json.loads(self.related_articles) if self.related_articles else [],
             "scraped_at": self.scraped_at.isoformat() if self.scraped_at else None,
+            "keywords": json.loads(self.keywords) if self.keywords else [],
         }
 
 # Create tables
